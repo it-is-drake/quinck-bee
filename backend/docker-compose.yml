@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # nginx-api-gateway:
+  #   build: ./api-gateway
+  #   image: api-gateway-image
+  #   container_name: api-gateway
+  #   ports:
+  #     - '8080:80'
+  #   depends_on:
+  #     - rooms-app
+  #     - movies-app
+  #     - reproductions-app
+  #   networks:
+  #     - cinema-network
+
+  # data-receiver:
+  #   build: ./data-receiver
+  #   image: data-receiver-image
+  #   container_name: data-receiver
+  #   environment:
+  #     - RABBITMQ_URL=amqp://rabbitmq:5672
+  #   depends_on:
+  #     - mongo-db
+  #   networks:
+  #     - quinck-bee-network
+  #   restart: on-failure
+
+  # DATA RECEIVER
+  data-receiver:
+    build: ./data-receiver
+    ports:
+      - "3000:3000"
+    image: data-receiver-image
+    container_name: data-receiver
+    environment:
+      - MONGODB_URL=mongodb://mongo-db:27017/mongo_db
+    depends_on:
+      - mongo-db
+    networks:
+      - data-receiver-network
+    restart: on-failure
+
+  # RABBITMQ
+  # rabbitmq:
+  #   image: rabbitmq
+  #   container_name: rabbitmq
+  #   networks:
+  #     - cinema-network
+  #     - rooms-rabbit-network
+  #     - movies-rabbit-network
+  #     - reproductions-rabbit-network
+
+  # DB MANAGERS
+  # rooms-manager-service:
+  #   build: ./rooms-manager-service
+  #   image: rooms-manager-service-image
+  #   container_name: rooms-manager-service
+  #   environment:
+  #     - PGHOST=postgres
+  #     - PGPORT=5432
+  #     - PGUSER=postgres
+  #     - PGPASSWORD=mysecretpassword
+  #     - PGDATABASE=cinema
+  #     - RABBITMQ_URL=amqp://rabbitmq:5672
+  #   depends_on:
+  #     - rabbitmq
+  #     - postgres
+  #   networks:
+  #     - rooms-rabbit-network
+  #     - rooms-db-network
+  #   restart: on-failure
+
+  # movies-manager-service:
+  #   build: ./movies-manager-service
+  #   image: movies-manager-service-image
+  #   container_name: movies-manager-service
+  #   environment:
+  #     - MONGODB_URL=mongodb://mongo-movies:27017/mongo_db_movies
+  #     - RABBITMQ_URL=amqp://rabbitmq:5672
+  #   depends_on:
+  #     - rabbitmq
+  #     - mongo-movies
+  #   networks:
+  #     - movies-rabbit-network
+  #     - movies-db-network
+  #   restart: on-failure
+
+  # reproductions-manager-service:
+  #   build: ./reproductions-manager-service
+  #   image: reproductions-manager-service-image
+  #   container_name: reproductions-manager-service
+  #   environment:
+  #     - MONGODB_URL=mongodb://mongo-reproductions:27018/mongo_db_reproductions
+  #     - RABBITMQ_URL=amqp://rabbitmq:5672
+  #   depends_on:
+  #     - rabbitmq
+  #     - mongo-reproductions
+  #   networks:
+  #     - reproductions-rabbit-network
+  #     - reproductions-db-network
+  #   restart: on-failure
+
+  # DATABASE
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    hostname: mongo-db
+    command: mongod --port 27017
+    volumes:
+      - mongo-db:/data/db
+    networks:
+      - data-receiver-network
+
+  # mongo-reproductions:
+  #   image: mongo:latest
+  #   container_name: mongo-db-reproductions
+  #   command: mongod --port 27018
+  #   volumes:
+  #     - mongodb_reproductions:/data/db
+  #   networks:
+  #     - reproductions-db-network
+
+volumes:
+  mongo-db:
+
+networks:
+  data-receiver-network:
+    driver: bridge

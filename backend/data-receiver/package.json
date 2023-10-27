@@ -1,0 +1,12 @@
+{
+    "name": "docker_web_app",
+    "version": "1.0.0",
+    "main": "data-receiver.js",
+    "scripts": {
+        "start": "node data-receiver.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongodb": "^6.2.0"
+    }
+}
