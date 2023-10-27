@@ -15,12 +15,12 @@ const port = 3000
 
 app.get('/', (req, res) => {
   console.log("OK")
-  res.end("request received")
+  res.send("request received")
   // switch (req.url) {
   //   case "/temperature":
-      setTemperature(26.4)
-        .then(console.log)
-        .catch(console.error)
+      // setTemperature(26.4)
+      //   .then(console.log)
+      //   .catch(console.error)
   //     res.writeHead(200);
   //     res.end("temperature set");
   //     break
