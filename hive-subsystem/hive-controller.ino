@@ -39,7 +39,7 @@ const int  port = 3000;
 TinyGsm modem(Serial1);
 
 #define uS_TO_S_FACTOR 1000000UL   /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  120         /* Time ESP32 will go to sleep (in seconds) 3600 seconds = 1 hour */
+#define TIME_TO_SLEEP  150         /* Time ESP32 will go to sleep (in seconds) 3600 seconds = 1 hour */
 
 #define IP5306_ADDR          0x75
 #define IP5306_REG_SYS_CTL0  0x00
