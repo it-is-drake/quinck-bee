@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>QuinckBee</title>
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+        <script src="javascript.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>QuinckBee</h1>
+        </header>
+        <main>
+            <section>
+                <h2 id="current_temperature"></h2>
+                <p>Seleziona data e orario per visualizzare i grafici</p>
+                <input id="date_input" type="date">
+                <input id="start_time" type="time" value="00:00">
+                <input id="end_time" type="time" value="23:59">
+                <h3>Andamento della temperatura</h3>
+                <canvas id="temperature_chart" style="width:100%"></canvas>
+                <h3>Spettro delle frequenze audio</h3>
+                <canvas id="frequency_chart" style="width:100%"></canvas>
+            </section>
+        </main>
+    </body>
+</html>
