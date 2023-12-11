@@ -5,46 +5,55 @@ const host = 'localhost'
 var url = process.env.MONGODB_URL
 
 const client = new mongo.MongoClient(url)
-
-// Database Name
 const dbName = 'quinck-bee'
-
-const express = require('express')
-const app = express()
-app.use(express.json({ limit: "1mb" }))
-
-const port = 3000
 
 const sampleRate = 10000
 let lastTime = null
 let audioData = null
 
-app.post('/', (req, res) => {
-  console.log("Request Received")
-  console.log("Data type: " + req.body["data_type"])
-  switch (req.body["data_type"]) {
-    case ("temperature"):
-      res.writeHead(200)
-      res.end("temperature data received")
-      setTemperature(req.body["value"])
-      break
-    case ("audio"):
-        res.writeHead(200)
-        res.end("audio data received")
-        processAudioData(req.body.values, req.body.sequence_number, req.body.sequences)
-        break
-    default:
-      res.writeHead(400)
-      res.end("request is not valid")
-      break
+// MQTT
+const mqtt = require("mqtt")
+const mqttServer = "54.170.125.10"
+const mqttPort = "1883"
+const clientId = "quinck-bee-backend" + Math.random().toString(16).slice(3)
+const temperatureTopic = "quinck-bee-temperature"
+const audioTopic = "quinck-bee-audio"
+
+// Connection to MQTT server
+console.log("Connecting to MQTT server...")
+const mqttClient = mqtt.connect("mqtt://" + mqttServer + ":" + mqttPort, {
+    clean: true,
+    connectTimeout: 4000,
+    username: '',
+    password: '',
+    reconnectPeriod: 1000,
+})
+
+// Subscription to MQTT topics
+mqttClient.on("connect", () => {
+    console.log("MQTT server connected")
+    mqttClient.subscribe(temperatureTopic, () => {
+        console.log("Subscribed to topic " + temperatureTopic)
+    })
+    mqttClient.subscribe(audioTopic, () => {
+        console.log("Subscribed to topic " + audioTopic)
+    })
+})
+
+// Receiving MQTT messages
+mqttClient.on("message", (topic, payload) => {
+  // console.log("MQTT Message received: " + payload.toString() + " (topic: " + topic + ")")
+  switch(topic) {
+      case (temperatureTopic):
+          saveTemperature(payload.toString())
+          break
+      case (audioTopic):
+          processAudioData(payload.toString())
+          break
   }
 })
 
-app.listen(port, () => {
-  console.log(`Data Receiver listening on port ${port}`)
-})
-
-async function setTemperature(value) {
+async function saveTemperature(value) {
   await client.connect()
   console.log('Connected successfully to server')
   const db = client.db(dbName)
@@ -60,17 +69,17 @@ async function setTemperature(value) {
     value: value
   })
   console.log('Inserted value =>', insertResult)
-
-  return 'done.'
 }
 
-async function processAudioData(values, sequenceNumber, sequences) {
+async function processAudioData(payload) {
+  let messageData = JSON.parse(payload)
+
   if (new Date().getTime() - lastTime > 60000 || lastTime == null) {
     lastTime = new Date().getTime()
-    audioData = Array(values.length * sequences).fill(-1)
+    audioData = Array(messageData.values.length * messageData.messages).fill(-1)
   }
-  for (let i = 0; i < values.length; i++) {
-    audioData[i + (sequenceNumber * values.length)] = (values[i] / 2048 - 1)
+  for (let i = 0; i < messageData.values.length; i++) {
+    audioData[i + (messageData.sequence_number * messageData.values.length)] = (messageData.values[i] / 2048 - 1)
   }
   let check = true
   for (let i = 0; i < audioData.length; i++) {
@@ -78,7 +87,7 @@ async function processAudioData(values, sequenceNumber, sequences) {
       check = false
     }
   }
-  
+
   if (check) {
     const spectrum = ft(audioData)
     const labeledSpectrum = spectrum.map((v, i) => {
