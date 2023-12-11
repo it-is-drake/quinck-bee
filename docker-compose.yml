@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # NGINX
+  nginx:
+    build: ./frontend
+    ports: 
+      - "8080:80"
+    image: nginx-image
+    container_name: nginx
+
+  # DATA RECEIVER
+  data-receiver:
+    build: ./backend/data-receiver
+    ports:
+      - "3000:3000"
+    image: data-receiver-image
+    container_name: data-receiver
+    environment:
+      - MONGODB_URL=mongodb://mongo-db:27017/mongo_db
+    depends_on:
+      - mongo-db
+    networks:
+      - data-receiver-network
+      - mqtt-network
+    restart: on-failure
+
+  # DATA LOADER
+  data-loader:
+    build: ./backend/data-loader
+    ports:
+      - "3001:3001"
+    image: data-loader-image
+    container_name: data-loader
+    environment:
+      - MONGODB_URL=mongodb://mongo-db:27017/mongo_db
+    depends_on:
+      - mongo-db
+    networks:
+      - data-loader-network
+    restart: on-failure
+  
+  # MQTT BROKER
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    volumes:
+      - "/srv/mosquitto/config:/mosquitto/config"
+      - "/srv/mosquitto/log:/mosquitto/log"
+      - "/srv/mosquitto/data/:/mosquitto/data"
+    restart: always
+    ports:
+      - "1883:1883"
+    networks:
+      - mqtt-network
+
+  # DATABASE
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    hostname: mongo-db
+    command: mongod --port 27017
+    volumes:
+      - mongo-db:/data/db
+    networks:
+      - data-receiver-network
+      - data-loader-network
+
+volumes:
+  mongo-db:
+
+networks:
+  data-receiver-network:
+    driver: bridge
+  data-loader-network:
+    driver: bridge
+  mqtt-network:
+    driver: bridge
